@@ -176,7 +176,7 @@ func (p *Prompt) Render(ctx context.Context, input any) (*GenerateActionOptions,
 	}
 
 	if len(p.Middleware) > 0 {
-		logger.FromContext(ctx).Warn(fmt.Sprintf("middleware set on prompt %q will be ignored during Prompt.Render", p.Name()))
+		logger.FromContext(ctx).WarnContext(ctx, "genkit: Middleware set on prompt will be ignored during Prompt.Render", "prompt", p.Name())
 	}
 
 	// TODO: This is hacky; we should have a helper that fetches the metadata.
@@ -472,7 +472,7 @@ func LoadPromptDir(r *registry.Registry, dir string, namespace string) error {
 		if !useDefaultDir {
 			return fmt.Errorf("failed to resolve prompt directory %q: %w", dir, err)
 		}
-		slog.Debug("default prompt directory not found, skipping loading .prompt files", "dir", dir)
+		slog.DebugContext(context.TODO(), "genkit: Default prompt directory not found, skipping loading .prompt files", "dir", dir)
 		return nil
 	}
 
@@ -480,7 +480,7 @@ func LoadPromptDir(r *registry.Registry, dir string, namespace string) error {
 		if !useDefaultDir {
 			return fmt.Errorf("failed to resolve prompt directory %q: %w", dir, err)
 		}
-		slog.Debug("Default prompt directory not found, skipping loading .prompt files", "dir", dir)
+		slog.DebugContext(context.TODO(), "genkit: Default prompt directory not found, skipping loading .prompt files", "dir", dir)
 		return nil
 	}
 
@@ -506,13 +506,13 @@ func loadPromptDir(r *registry.Registry, dir string, namespace string) error {
 				partialName := strings.TrimSuffix(filename[1:], ".prompt")
 				source, err := os.ReadFile(path)
 				if err != nil {
-					slog.Error("Failed to read partial file", "error", err)
+					slog.ErrorContext(context.TODO(), "genkit: Failed to read partial file", "error", err)
 					continue
 				}
 				if err = r.DefinePartial(partialName, string(source)); err != nil {
 					return err
 				}
-				slog.Debug("Registered Dotprompt partial", "name", partialName, "file", path)
+				slog.DebugContext(context.TODO(), "genkit: Registered Dotprompt partial", "name", partialName, "file", path)
 			} else {
 				if _, err := LoadPrompt(r, dir, filename, namespace); err != nil {
 					return err
@@ -531,19 +531,19 @@ func LoadPrompt(r *registry.Registry, dir, filename, namespace string) (*Prompt,
 	sourceFile := filepath.Join(dir, filename)
 	source, err := os.ReadFile(sourceFile)
 	if err != nil {
-		slog.Error("Failed to read prompt file", "file", sourceFile, "error", err)
+		slog.ErrorContext(context.TODO(), "genkit: Failed to read prompt file", "file", sourceFile, "error", err)
 		return nil, nil
 	}
 
 	parsedPrompt, err := r.Dotprompt.Parse(string(source))
 	if err != nil {
-		slog.Error("Failed to parse file as dotprompt", "file", sourceFile, "error", err)
+		slog.ErrorContext(context.TODO(), "genkit: Failed to parse file as dotprompt", "file", sourceFile, "error", err)
 		return nil, nil
 	}
 
 	metadata, err := r.Dotprompt.RenderMetadata(string(source), &parsedPrompt.PromptMetadata)
 	if err != nil {
-		slog.Error("Failed to render dotprompt metadata", "file", sourceFile, "error", err)
+		slog.ErrorContext(context.TODO(), "genkit: Failed to render dotprompt metadata", "file", sourceFile, "error", err)
 		return nil, nil
 	}
 
@@ -606,11 +606,11 @@ func LoadPrompt(r *registry.Registry, dir, filename, namespace string) (*Prompt,
 	key := promptKey(name, variant, namespace)
 	prompt, err := DefinePrompt(r, key, opts, WithPrompt(parsedPrompt.Template))
 	if err != nil {
-		slog.Error("Failed to register dotprompt", "file", sourceFile, "error", err)
+		slog.ErrorContext(context.TODO(), "genkit: Failed to register dotprompt", "file", sourceFile, "error", err)
 		return nil, err
 	}
 
-	slog.Debug("Registered Dotprompt", "name", key, "file", sourceFile)
+	slog.DebugContext(context.TODO(), "genkit: Registered Dotprompt", "name", key, "file", sourceFile)
 
 	return prompt, nil
 }

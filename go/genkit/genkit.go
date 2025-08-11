@@ -221,7 +221,7 @@ func Init(ctx context.Context, opts ...GenkitOption) (*Genkit, error) {
 				return
 			}
 			if err := <-errCh; err != nil {
-				slog.Error("reflection server error", "err", err)
+				slog.ErrorContext(ctx, "genkit: Reflection server error", "err", err)
 			}
 		}()
 
@@ -229,7 +229,7 @@ func Init(ctx context.Context, opts ...GenkitOption) (*Genkit, error) {
 		case err := <-errCh:
 			return nil, fmt.Errorf("genkit.Init: reflection server startup failed: %w", err)
 		case <-serverStartCh:
-			slog.Debug("reflection server started successfully")
+			slog.DebugContext(ctx, "genkit: Reflection server started successfully")
 		case <-ctx.Done():
 			return nil, ctx.Err()
 		}

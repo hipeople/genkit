@@ -17,6 +17,7 @@
 package registry
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"maps"
@@ -99,7 +100,7 @@ func (r *Registry) RegisterPlugin(name string, p any) {
 		panic(fmt.Sprintf("plugin %q is already registered", name))
 	}
 	r.plugins[name] = p
-	slog.Debug("RegisterPlugin", "name", name)
+	slog.DebugContext(context.TODO(), "genkit: RegisterPlugin", "name", name)
 }
 
 // RegisterAction records the action in the registry.
@@ -112,7 +113,7 @@ func (r *Registry) RegisterAction(key string, action any) {
 		panic(fmt.Sprintf("action %q is already registered", key))
 	}
 	r.actions[key] = action
-	slog.Debug("RegisterAction", "key", key)
+	slog.DebugContext(context.TODO(), "genkit: RegisterAction", "key", key)
 }
 
 // LookupPlugin returns the plugin for the given name.
@@ -142,7 +143,7 @@ func (r *Registry) RegisterValue(name string, value any) {
 		panic(fmt.Sprintf("value %q is already registered", name))
 	}
 	r.values[name] = value
-	slog.Debug("RegisterValue", "name", name)
+	slog.DebugContext(context.TODO(), "genkit: RegisterValue", "name", name)
 }
 
 // LookupValue returns the value for the given name.
@@ -187,13 +188,13 @@ func (r *Registry) ResolveAction(key string) any {
 	if action == nil && r.ActionResolver != nil {
 		typ, provider, name, err := ParseActionKey(key)
 		if err != nil {
-			slog.Debug("ResolveAction: failed to parse action key", "key", key, "err", err)
+			slog.DebugContext(context.TODO(), "genkit: ResolveAction: failed to parse action key", "key", key, "err", err)
 			return nil
 		}
 		err = r.ActionResolver(typ, provider, name)
 		if err != nil {
 			// TODO: Handle errors from the action resolver better.
-			slog.Error("ResolveAction: failed to resolve action", "key", key, "err", err)
+			slog.ErrorContext(context.TODO(), "genkit: ResolveAction: failed to resolve action", "key", key, "err", err)
 			return nil
 		}
 		action = r.LookupAction(key)

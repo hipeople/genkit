@@ -176,17 +176,17 @@ func (c *GenkitMCPClient) createToolFunction(mcpTool mcp.Tool) func(*ai.ToolCont
 		}
 
 		// Log the MCP tool call request
-		logger.FromContext(ctx).Debug("Calling MCP tool", "tool", currentMCPTool.Name, "args", callToolArgs)
+		logger.FromContext(ctx).DebugContext(ctx, "genkit: Calling MCP tool", "tool", currentMCPTool.Name, "args", callToolArgs)
 
 		// Create and execute the MCP tool call request
 		mcpResult, err := executeToolCall(ctx, client, currentMCPTool.Name, callToolArgs)
 		if err != nil {
-			logger.FromContext(ctx).Error("MCP tool call failed", "tool", currentMCPTool.Name, "error", err)
+			logger.FromContext(ctx).ErrorContext(ctx, "genkit: MCP tool call failed", "tool", currentMCPTool.Name, "error", err)
 			return nil, fmt.Errorf("failed to call tool %s: %w", currentMCPTool.Name, err)
 		}
 
 		// Log the MCP tool call response
-		logger.FromContext(ctx).Debug("MCP tool call succeeded", "tool", currentMCPTool.Name, "result", mcpResult)
+		logger.FromContext(ctx).DebugContext(ctx, "genkit: MCP tool call succeeded", "tool", currentMCPTool.Name, "result", mcpResult)
 
 		return mcpResult, nil
 	}
@@ -245,18 +245,18 @@ func executeToolCall(ctx context.Context, client *client.Client, toolName string
 
 	// Log the raw MCP request
 	reqBytes, _ := json.MarshalIndent(callReq, "", "  ")
-	logger.FromContext(ctx).Debug("Raw MCP request", "request", string(reqBytes))
+	logger.FromContext(ctx).DebugContext(ctx, "genkit: Raw MCP request", "request", string(reqBytes))
 
 	result, err := client.CallTool(ctx, callReq)
 
 	if err != nil {
-		logger.FromContext(ctx).Error("Raw MCP server error", "error", err)
+		logger.FromContext(ctx).ErrorContext(ctx, "genkit: Raw MCP server error", "error", err)
 		return nil, err
 	}
 
 	// Log the raw MCP response
 	respBytes, _ := json.MarshalIndent(result, "", "  ")
-	logger.FromContext(ctx).Debug("Raw MCP response", "response", string(respBytes))
+	logger.FromContext(ctx).DebugContext(ctx, "genkit: Raw MCP response", "response", string(respBytes))
 
 	return result, nil
 }

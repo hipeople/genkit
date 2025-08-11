@@ -169,7 +169,7 @@ func DefineEvaluator(r *registry.Registry, provider, name string, options *Evalu
 					return evaluatorResponse, nil
 				})
 			if err != nil {
-				logger.FromContext(ctx).Debug("EvaluatorAction", "err", err)
+				logger.FromContext(ctx).DebugContext(ctx, "genkit: EvaluatorAction", "err", err)
 				continue
 			}
 		}
