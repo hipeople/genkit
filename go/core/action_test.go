@@ -19,11 +19,9 @@ package core
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"slices"
 	"testing"
 
-	"github.com/firebase/genkit/go/core/tracing"
 	"github.com/firebase/genkit/go/internal/registry"
 )
 
@@ -109,32 +107,4 @@ func TestActionStreaming(t *testing.T) {
 	if got != n {
 		t.Errorf("got %d, want %d", got, n)
 	}
-}
-
-func TestActionTracing(t *testing.T) {
-	r, err := registry.New()
-	if err != nil {
-		t.Fatal(err)
-	}
-	provider := "test"
-	tc := tracing.NewTestOnlyTelemetryClient()
-	r.TracingState().WriteTelemetryImmediate(tc)
-	const actionName = "TestTracing-inc"
-	a := defineAction(r, provider, actionName, ActionTypeCustom, nil, nil, inc)
-	if _, err := a.Run(context.Background(), 3, nil); err != nil {
-		t.Fatal(err)
-	}
-	// The same trace store is used for all tests, so there might be several traces.
-	// Look for this one, which has a unique name.
-	fullActionName := fmt.Sprintf("%s/%s", provider, actionName)
-	for _, td := range tc.Traces {
-		if td.DisplayName == fullActionName {
-			// Spot check: expect a single span.
-			if g, w := len(td.Spans), 1; g != w {
-				t.Errorf("got %d spans, want %d", g, w)
-			}
-			return
-		}
-	}
-	t.Fatalf("did not find trace named %q", actionName)
 }
