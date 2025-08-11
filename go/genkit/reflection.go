@@ -33,7 +33,6 @@ import (
 	"github.com/firebase/genkit/go/core"
 	"github.com/firebase/genkit/go/core/api"
 	"github.com/firebase/genkit/go/core/logger"
-	"github.com/firebase/genkit/go/core/tracing"
 	"github.com/firebase/genkit/go/internal"
 )
 
@@ -377,11 +376,6 @@ func handleNotify() func(w http.ResponseWriter, r *http.Request) error {
 		defer r.Body.Close()
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			return core.NewError(core.INVALID_ARGUMENT, err.Error())
-		}
-
-		if os.Getenv("GENKIT_TELEMETRY_SERVER") == "" && body.TelemetryServerURL != "" {
-			tracing.WriteTelemetryImmediate(tracing.NewHTTPTelemetryClient(body.TelemetryServerURL))
-			slog.Debug("connected to telemetry server", "url", body.TelemetryServerURL)
 		}
 
 		if body.ReflectionApiSpecVersion != internal.GENKIT_REFLECTION_API_SPEC_VERSION {
