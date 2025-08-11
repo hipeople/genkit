@@ -29,9 +29,7 @@ import (
 
 	"cloud.google.com/go/logging"
 	mexporter "github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric"
-	texporter "github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace"
 	"github.com/firebase/genkit/go/core"
-	"github.com/firebase/genkit/go/core/tracing"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -64,13 +62,6 @@ func (gc *GoogleCloud) Init(ctx context.Context) []core.Action {
 	if !shouldExport {
 		return []core.Action{}
 	}
-	// Add a SpanProcessor for tracing.
-	texp, err := texporter.New(texporter.WithProjectID(gc.ProjectID))
-	if err != nil {
-		panic(fmt.Errorf("googlecloud.Init: %w", err))
-	}
-	aexp := &adjustingTraceExporter{texp}
-	tracing.TracerProvider().RegisterSpanProcessor(sdktrace.NewBatchSpanProcessor(aexp))
 	if err := setMeterProvider(gc.ProjectID, gc.MetricInterval); err != nil {
 		panic(fmt.Errorf("googlecloud.Init: %w", err))
 	}

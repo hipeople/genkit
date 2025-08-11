@@ -19,15 +19,12 @@ package tracing
 
 import (
 	"context"
-	"os"
 	"sync"
 
-	"github.com/firebase/genkit/go/core/logger"
 	"github.com/firebase/genkit/go/internal/base"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -35,53 +32,14 @@ var (
 	providerInitOnce sync.Once
 )
 
-// TracerProvider returns the global tracer provider, creating it if needed.
-func TracerProvider() *sdktrace.TracerProvider {
-	if tp := otel.GetTracerProvider(); tp != nil {
-		if sdkTP, ok := tp.(*sdktrace.TracerProvider); ok {
-			return sdkTP
-		}
-	}
-
-	providerInitOnce.Do(func() {
-		otel.SetTracerProvider(sdktrace.NewTracerProvider())
-		if telemetryURL := os.Getenv("GENKIT_TELEMETRY_SERVER"); telemetryURL != "" {
-			WriteTelemetryImmediate(NewHTTPTelemetryClient(telemetryURL))
-		}
-	})
-
-	return otel.GetTracerProvider().(*sdktrace.TracerProvider)
+// TracerProvider returns the global tracer provider.
+func TracerProvider() trace.TracerProvider {
+	return otel.GetTracerProvider()
 }
 
 // Tracer returns a tracer from the global tracer provider.
 func Tracer() trace.Tracer {
 	return TracerProvider().Tracer("genkit-tracer", trace.WithInstrumentationVersion("v1"))
-}
-
-// WriteTelemetryImmediate adds a telemetry server to the global tracer provider.
-// Traces are saved immediately as they are finished.
-// Use this for a gtrace.Store with a fast Save method,
-// such as one that writes to a file.
-func WriteTelemetryImmediate(client TelemetryClient) {
-	e := newTraceServerExporter(client)
-	// Adding a SimpleSpanProcessor is like using the WithSyncer option.
-	TracerProvider().RegisterSpanProcessor(sdktrace.NewSimpleSpanProcessor(e))
-	// Ignore tracerProvider.Shutdown. It shouldn't be needed when using WithSyncer.
-	// Confirmed for OTel packages as of v1.24.0.
-	// Also requires traceStoreExporter.Shutdown to be a no-op.
-}
-
-// WriteTelemetryBatch adds a telemetry server to the global tracer provider.
-// Traces are batched before being sent for processing.
-// Use this for a gtrace.Store with a potentially expensive Save method,
-// such as one that makes an RPC.
-// Callers must invoke the returned function at the end of the program to flush the final batch
-// and perform other cleanup.
-func WriteTelemetryBatch(client TelemetryClient) (shutdown func(context.Context) error) {
-	e := newTraceServerExporter(client)
-	// Adding a BatchSpanProcessor is like using the WithBatcher option.
-	TracerProvider().RegisterSpanProcessor(sdktrace.NewBatchSpanProcessor(e))
-	return TracerProvider().Shutdown
 }
 
 // The rest of this file contains code translated from js/common/src/tracing/*.ts.
@@ -101,9 +59,6 @@ func RunInNewSpan[I, O any](
 	f func(context.Context, I) (O, error),
 ) (O, error) {
 	// TODO: support span links.
-	log := logger.FromContext(ctx)
-	log.Debug("span start", "name", name)
-	defer log.Debug("span end", "name", name)
 	sm := &spanMetadata{
 		Name:   name,
 		Input:  input,

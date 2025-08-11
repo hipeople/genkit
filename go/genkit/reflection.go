@@ -339,11 +339,6 @@ func handleNotify() func(w http.ResponseWriter, r *http.Request) error {
 			return core.NewError(core.INVALID_ARGUMENT, err.Error())
 		}
 
-		if os.Getenv("GENKIT_TELEMETRY_SERVER") == "" && body.TelemetryServerURL != "" {
-			tracing.WriteTelemetryImmediate(tracing.NewHTTPTelemetryClient(body.TelemetryServerURL))
-			slog.Debug("connected to telemetry server", "url", body.TelemetryServerURL)
-		}
-
 		if body.ReflectionApiSpecVersion != internal.GENKIT_REFLECTION_API_SPEC_VERSION {
 			slog.ErrorContext(r.Context(), "genkit: Genkit CLI version is not compatible with runtime library. Please use `genkit-cli` version compatible with runtime library version.")
 		}

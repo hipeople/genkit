@@ -63,7 +63,7 @@ func (h *handler) Handle(ctx context.Context, r slog.Record) error {
 	return nil
 }
 
-func (h *handler) recordToEntry(ctx context.Context, r slog.Record) logging.Entry {
+func (h *handler) recordToEntry(_ context.Context, r slog.Record) logging.Entry {
 	return logging.Entry{
 		Timestamp: r.Time,
 		Severity:  levelToSeverity(r.Level),

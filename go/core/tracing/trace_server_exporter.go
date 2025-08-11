@@ -34,10 +34,6 @@ type traceServerExporter struct {
 	client TelemetryClient
 }
 
-func newTraceServerExporter(client TelemetryClient) *traceServerExporter {
-	return &traceServerExporter{client}
-}
-
 // ExportSpans implements [go.opentelemetry.io/otel/sdk/trace.SpanExporter.ExportSpans].
 // It saves the spans to e's TraceStore.
 // Saving is not atomic: it is possible that some but not all spans will be saved.

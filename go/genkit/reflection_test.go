@@ -29,7 +29,6 @@ import (
 	"time"
 
 	"github.com/firebase/genkit/go/core"
-	"github.com/firebase/genkit/go/core/tracing"
 )
 
 func inc(_ context.Context, x int) (int, error) {
@@ -43,9 +42,6 @@ func dec(_ context.Context, x int) (int, error) {
 func TestReflectionServer(t *testing.T) {
 	t.Run("server startup and shutdown", func(t *testing.T) {
 		g := Init(context.Background())
-
-		tc := tracing.NewTestOnlyTelemetryClient()
-		tracing.WriteTelemetryImmediate(tc)
 
 		errCh := make(chan error, 1)
 		serverStartCh := make(chan struct{})
@@ -82,9 +78,6 @@ func TestReflectionServer(t *testing.T) {
 
 func TestServeMux(t *testing.T) {
 	g := Init(context.Background())
-
-	tc := tracing.NewTestOnlyTelemetryClient()
-	tracing.WriteTelemetryImmediate(tc)
 
 	core.DefineAction(g.reg, "test/inc", core.ActionTypeCustom, nil, nil, inc)
 	core.DefineAction(g.reg, "test/dec", core.ActionTypeCustom, nil, nil, dec)
