@@ -145,11 +145,11 @@ func main() {
 		Name: "text-utilities",
 	})
 
-	logger.FromContext(ctx).Info("Starting MCP server", "name", "text-utilities", "tools", server.ListRegisteredTools())
-	logger.FromContext(ctx).Info("Ready! Run: go run client.go")
+	logger.FromContext(ctx).InfoContext(ctx, "genkit: Starting MCP server", "name", "text-utilities", "tools", server.ListRegisteredTools())
+	logger.FromContext(ctx).InfoContext(ctx, "genkit: Ready! Run: go run client.go")
 
 	if err := server.ServeStdio(ctx); err != nil && err != context.Canceled {
-		logger.FromContext(ctx).Error("MCP server error", "error", err)
+		logger.FromContext(ctx).ErrorContext(ctx, "genkit: MCP server error", "error", err)
 		os.Exit(1)
 	}
 }

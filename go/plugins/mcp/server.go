@@ -77,12 +77,12 @@ func (s *GenkitMCPServer) loadExplicitTools() {
 		if tool != nil {
 			s.tools[tool.Name()] = tool
 			loadedCount++
-			slog.Debug("MCP Server: Loaded explicit tool", "name", tool.Name())
+			slog.DebugContext(context.TODO(), "genkit: MCP Server: Loaded explicit tool", "name", tool.Name())
 		} else {
-			slog.Warn("MCP Server: Nil tool in explicit tools list")
+			slog.WarnContext(context.TODO(), "genkit: MCP Server: Nil tool in explicit tools list")
 		}
 	}
-	slog.Info("MCP Server: Explicit tool loading complete", "loaded", loadedCount, "requested", len(s.options.Tools))
+	slog.InfoContext(context.TODO(), "genkit: MCP Server: Explicit tool loading complete", "loaded", loadedCount, "requested", len(s.options.Tools))
 }
 
 // discoverTools discovers all tools from the Genkit registry
@@ -95,11 +95,11 @@ func (s *GenkitMCPServer) discoverTools() {
 		if tool != nil {
 			s.tools[tool.Name()] = tool
 			discoveredCount++
-			slog.Debug("MCP Server: Discovered tool", "name", tool.Name())
+			slog.DebugContext(context.TODO(), "genkit: MCP Server: Discovered tool", "name", tool.Name())
 		}
 	}
 
-	slog.Info("MCP Server: Tool discovery complete", "discovered", discoveredCount)
+	slog.InfoContext(context.TODO(), "genkit: MCP Server: Tool discovery complete", "discovered", discoveredCount)
 }
 
 // setup initializes the MCP server
@@ -118,7 +118,7 @@ func (s *GenkitMCPServer) setup() error {
 		}
 	}
 
-	slog.Info("MCP Server setup complete", "name", s.options.Name, "tools", len(s.tools))
+	slog.InfoContext(context.TODO(), "genkit: MCP Server setup complete", "name", s.options.Name, "tools", len(s.tools))
 	return nil
 }
 
@@ -161,12 +161,12 @@ func (s *GenkitMCPServer) convertGenkitToolToMCP(tool ai.Tool) (mcp.Tool, error)
 func (s *GenkitMCPServer) createToolHandler(tool ai.Tool) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		// Log the tool call
-		slog.Debug("MCP Server: Tool called", "name", request.Params.Name, "args", request.Params.Arguments)
+		slog.DebugContext(ctx, "genkit: MCP Server: Tool called", "name", request.Params.Name, "args", request.Params.Arguments)
 
 		// Execute the Genkit tool
 		result, err := tool.RunRaw(ctx, request.Params.Arguments)
 		if err != nil {
-			slog.Error("MCP Server: Tool execution failed", "name", request.Params.Name, "error", err)
+			slog.ErrorContext(ctx, "genkit: MCP Server: Tool execution failed", "name", request.Params.Name, "error", err)
 			return mcp.NewToolResultError(err.Error()), nil
 		}
 
@@ -198,7 +198,7 @@ func (s *GenkitMCPServer) ServeStdio(ctx context.Context) error {
 		return fmt.Errorf("failed to setup MCP server: %w", err)
 	}
 
-	slog.Info("MCP Server starting with stdio transport", "name", s.options.Name, "tools", len(s.tools))
+	slog.InfoContext(ctx, "genkit: MCP Server starting with stdio transport", "name", s.options.Name, "tools", len(s.tools))
 	return server.ServeStdio(s.mcpServer)
 }
 
@@ -208,7 +208,7 @@ func (s *GenkitMCPServer) ServeSSE(ctx context.Context, addr string) error {
 		return fmt.Errorf("failed to setup MCP server: %w", err)
 	}
 
-	slog.Info("MCP Server starting with SSE transport", "name", s.options.Name, "addr", addr, "tools", len(s.tools))
+	slog.InfoContext(ctx, "genkit: MCP Server starting with SSE transport", "name", s.options.Name, "addr", addr, "tools", len(s.tools))
 	sseServer := server.NewSSEServer(s.mcpServer)
 	return sseServer.Start(addr)
 }

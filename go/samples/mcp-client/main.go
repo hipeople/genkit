@@ -54,7 +54,7 @@ func managerExample() {
 
 	// Get tools and generate response
 	tools, _ := manager.GetActiveTools(ctx, g)
-	logger.FromContext(ctx).Info("Found MCP tools", "count", len(tools), "example", "time")
+	logger.FromContext(ctx).InfoContext(ctx, "genkit: Found MCP tools", "count", len(tools), "example", "time")
 
 	var toolRefs []ai.ToolRef
 	for _, tool := range tools {
@@ -68,14 +68,14 @@ func managerExample() {
 		ai.WithToolChoice(ai.ToolChoiceAuto),
 	)
 	if err != nil {
-		logger.FromContext(ctx).Error("Generation failed", "error", err)
+		logger.FromContext(ctx).ErrorContext(ctx, "genkit: Generation failed", "error", err)
 	} else {
-		logger.FromContext(ctx).Info("Generation completed", "response", response.Text())
+		logger.FromContext(ctx).InfoContext(ctx, "genkit: Generation completed", "response", response.Text())
 	}
 
 	// Disconnect from server
 	manager.Disconnect(ctx, "time")
-	logger.FromContext(ctx).Info("Disconnected from MCP server", "server", "time")
+	logger.FromContext(ctx).InfoContext(ctx, "genkit: Disconnected from MCP server", "server", "time")
 }
 
 // MCP Manager Multi-Server Example - connects to both time and fetch servers
@@ -116,7 +116,7 @@ func multiServerManagerExample() {
 
 	// Get tools from all connected servers
 	tools, _ := manager.GetActiveTools(ctx, g)
-	logger.FromContext(ctx).Info("Found MCP tools from all servers", "count", len(tools), "servers", []string{"time", "fetch"})
+	logger.FromContext(ctx).InfoContext(ctx, "genkit: Found MCP tools from all servers", "count", len(tools), "servers", []string{"time", "fetch"})
 
 	var toolRefs []ai.ToolRef
 	for _, tool := range tools {
@@ -131,15 +131,15 @@ func multiServerManagerExample() {
 		ai.WithToolChoice(ai.ToolChoiceAuto),
 	)
 	if err != nil {
-		logger.FromContext(ctx).Error("Generation failed", "error", err)
+		logger.FromContext(ctx).ErrorContext(ctx, "genkit: Generation failed", "error", err)
 	} else {
-		logger.FromContext(ctx).Info("Generation completed", "response", response.Text())
+		logger.FromContext(ctx).InfoContext(ctx, "genkit: Generation completed", "response", response.Text())
 	}
 
 	// Disconnect from all servers
 	manager.Disconnect(ctx, "time")
 	manager.Disconnect(ctx, "fetch")
-	logger.FromContext(ctx).Info("Disconnected from all MCP servers", "servers", []string{"time", "fetch"})
+	logger.FromContext(ctx).InfoContext(ctx, "genkit: Disconnected from all MCP servers", "servers", []string{"time", "fetch"})
 }
 
 // MCP Client Example - connects to time server
@@ -159,13 +159,13 @@ func clientExample() {
 		},
 	})
 	if err != nil {
-		logger.FromContext(ctx).Error("Failed to create MCP client", "error", err)
+		logger.FromContext(ctx).ErrorContext(ctx, "genkit: Failed to create MCP client", "error", err)
 		return
 	}
 
 	// Get tools and generate response
 	tools, _ := client.GetActiveTools(ctx, g)
-	logger.FromContext(ctx).Info("Found MCP time tools", "count", len(tools), "client", "mcp-time")
+	logger.FromContext(ctx).InfoContext(ctx, "genkit: Found MCP time tools", "count", len(tools), "client", "mcp-time")
 
 	var toolRefs []ai.ToolRef
 	for _, tool := range tools {
@@ -179,15 +179,15 @@ func clientExample() {
 		ai.WithToolChoice(ai.ToolChoiceAuto),
 	)
 	if err != nil {
-		logger.FromContext(ctx).Error("Generation failed", "error", err)
+		logger.FromContext(ctx).ErrorContext(ctx, "genkit: Generation failed", "error", err)
 	} else {
-		logger.FromContext(ctx).Info("Generation completed", "response", response.Text())
+		logger.FromContext(ctx).InfoContext(ctx, "genkit: Generation completed", "response", response.Text())
 	}
 
 	// Disconnect from server
-	logger.FromContext(ctx).Info("Disconnecting from MCP server", "client", "mcp-time")
+	logger.FromContext(ctx).InfoContext(ctx, "genkit: Disconnecting from MCP server", "client", "mcp-time")
 	client.Disconnect()
-	logger.FromContext(ctx).Info("Disconnected from MCP server", "client", "mcp-time")
+	logger.FromContext(ctx).InfoContext(ctx, "genkit: Disconnected from MCP server", "client", "mcp-time")
 }
 
 // MCP Client GetPrompt Example - connects to a server and uses prompts
@@ -197,7 +197,7 @@ func clientGetPromptExample() {
 	// Initialize Genkit with Google AI
 	g := genkit.Init(ctx, genkit.WithPlugins(&googlegenai.GoogleAI{}))
 
-	logger.FromContext(ctx).Info("Creating MCP client", "server", "everything")
+	logger.FromContext(ctx).InfoContext(ctx, "genkit: Creating MCP client", "server", "everything")
 	// Create and connect to MCP server (using everything server as example)
 	client, err := mcp.NewGenkitMCPClient(mcp.MCPClientOptions{
 		Name:    "mcp-everything",
@@ -208,29 +208,29 @@ func clientGetPromptExample() {
 		},
 	})
 	if err != nil {
-		logger.FromContext(ctx).Error("Failed to create MCP client", "error", err)
+		logger.FromContext(ctx).ErrorContext(ctx, "genkit: Failed to create MCP client", "error", err)
 		return
 	}
-	logger.FromContext(ctx).Info("MCP client created successfully", "client", "mcp-everything")
+	logger.FromContext(ctx).InfoContext(ctx, "genkit: MCP client created successfully", "client", "mcp-everything")
 
 	// Get a specific prompt from the server
-	logger.FromContext(ctx).Info("Getting prompt from MCP server", "prompt", "simple_prompt")
+	logger.FromContext(ctx).InfoContext(ctx, "genkit: Getting prompt from MCP server", "prompt", "simple_prompt")
 	prompt, err := client.GetPrompt(ctx, g, "simple_prompt", map[string]string{})
 	if err != nil {
-		logger.FromContext(ctx).Error("Failed to get prompt", "prompt", "simple_prompt", "error", err)
+		logger.FromContext(ctx).ErrorContext(ctx, "genkit: Failed to get prompt", "prompt", "simple_prompt", "error", err)
 	} else {
-		logger.FromContext(ctx).Info("Retrieved prompt successfully", "promptName", prompt.Name())
+		logger.FromContext(ctx).InfoContext(ctx, "genkit: Retrieved prompt successfully", "promptName", prompt.Name())
 
 		// Execute the prompt directly
-		logger.FromContext(ctx).Info("Executing prompt", "prompt", prompt.Name())
+		logger.FromContext(ctx).InfoContext(ctx, "genkit: Executing prompt", "prompt", prompt.Name())
 		response, err := prompt.Execute(ctx,
 			ai.WithInput(map[string]interface{}{}),
 			ai.WithModelName("googleai/gemini-2.5-pro-preview-05-06"),
 		)
 		if err != nil {
-			logger.FromContext(ctx).Error("Prompt execution failed", "prompt", prompt.Name(), "error", err)
+			logger.FromContext(ctx).ErrorContext(ctx, "genkit: Prompt execution failed", "prompt", prompt.Name(), "error", err)
 		} else {
-			logger.FromContext(ctx).Info("Prompt execution completed", "prompt", prompt.Name(), "response", response.Text())
+			logger.FromContext(ctx).InfoContext(ctx, "genkit: Prompt execution completed", "prompt", prompt.Name(), "response", response.Text())
 		}
 	}
 }
@@ -242,7 +242,7 @@ func clientStreamableHTTPExample() {
 	// Initialize Genkit with Google AI
 	g := genkit.Init(ctx, genkit.WithPlugins(&googlegenai.GoogleAI{}))
 
-	logger.FromContext(ctx).Info("Creating MCP client with Streamable HTTP transport", "server", "everything")
+	logger.FromContext(ctx).InfoContext(ctx, "genkit: Creating MCP client with Streamable HTTP transport", "server", "everything")
 	// Create and connect to MCP server using Streamable HTTP transport
 	// Note: Start the server with: npx @modelcontextprotocol/server-everything streamableHttp --port 3001
 	// This will start the server on http://localhost:3001
@@ -258,14 +258,14 @@ func clientStreamableHTTPExample() {
 		},
 	})
 	if err != nil {
-		logger.FromContext(ctx).Error("Failed to create MCP client with Streamable HTTP", "error", err)
+		logger.FromContext(ctx).ErrorContext(ctx, "genkit: Failed to create MCP client with Streamable HTTP", "error", err)
 		return
 	}
-	logger.FromContext(ctx).Info("MCP client with Streamable HTTP created successfully", "client", "mcp-everything-http")
+	logger.FromContext(ctx).InfoContext(ctx, "genkit: MCP client with Streamable HTTP created successfully", "client", "mcp-everything-http")
 
 	// Get tools and generate response
 	tools, _ := client.GetActiveTools(ctx, g)
-	logger.FromContext(ctx).Info("Found MCP tools via Streamable HTTP", "count", len(tools), "client", "mcp-everything-http")
+	logger.FromContext(ctx).InfoContext(ctx, "genkit: Found MCP tools via Streamable HTTP", "count", len(tools), "client", "mcp-everything-http")
 
 	var toolRefs []ai.ToolRef
 	for _, tool := range tools {
@@ -280,15 +280,15 @@ func clientStreamableHTTPExample() {
 		ai.WithToolChoice(ai.ToolChoiceAuto),
 	)
 	if err != nil {
-		logger.FromContext(ctx).Error("Generation failed", "error", err)
+		logger.FromContext(ctx).ErrorContext(ctx, "genkit: Generation failed", "error", err)
 	} else {
-		logger.FromContext(ctx).Info("Generation completed", "response", response.Text())
+		logger.FromContext(ctx).InfoContext(ctx, "genkit: Generation completed", "response", response.Text())
 	}
 
 	// Disconnect from server
-	logger.FromContext(ctx).Info("Disconnecting from MCP server", "client", "mcp-everything-http")
+	logger.FromContext(ctx).InfoContext(ctx, "genkit: Disconnecting from MCP server", "client", "mcp-everything-http")
 	client.Disconnect()
-	logger.FromContext(ctx).Info("Disconnected from MCP server", "client", "mcp-everything-http")
+	logger.FromContext(ctx).InfoContext(ctx, "genkit: Disconnected from MCP server", "client", "mcp-everything-http")
 }
 
 func main() {
@@ -306,19 +306,19 @@ func main() {
 
 	switch os.Args[1] {
 	case "manager":
-		logger.FromContext(ctx).Info("Running MCP Manager example")
+		logger.FromContext(ctx).InfoContext(ctx, "genkit: Running MCP Manager example")
 		managerExample()
 	case "multi":
-		logger.FromContext(ctx).Info("Running MCP Manager multi-server example")
+		logger.FromContext(ctx).InfoContext(ctx, "genkit: Running MCP Manager multi-server example")
 		multiServerManagerExample()
 	case "client":
-		logger.FromContext(ctx).Info("Running MCP Client example")
+		logger.FromContext(ctx).InfoContext(ctx, "genkit: Running MCP Client example")
 		clientExample()
 	case "getprompt":
-		logger.FromContext(ctx).Info("Running MCP Client GetPrompt example")
+		logger.FromContext(ctx).InfoContext(ctx, "genkit: Running MCP Client GetPrompt example")
 		clientGetPromptExample()
 	case "streamablehttp":
-		logger.FromContext(ctx).Info("Running MCP Client Streamable HTTP example")
+		logger.FromContext(ctx).InfoContext(ctx, "genkit: Running MCP Client Streamable HTTP example")
 		clientStreamableHTTPExample()
 	default:
 		fmt.Printf("Unknown example: %s\n", os.Args[1])

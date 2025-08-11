@@ -216,11 +216,11 @@ func (a *ActionDef[In, Out, Stream]) Name() string { return a.desc.Name }
 
 // Run executes the Action's function in a new trace span.
 func (a *ActionDef[In, Out, Stream]) Run(ctx context.Context, input In, cb StreamCallback[Stream]) (output Out, err error) {
-	logger.FromContext(ctx).Debug("Action.Run",
+	logger.FromContext(ctx).DebugContext(ctx, "genkit: Action.Run",
 		"name", a.Name,
 		"input", fmt.Sprintf("%#v", input))
 	defer func() {
-		logger.FromContext(ctx).Debug("Action.Run",
+		logger.FromContext(ctx).DebugContext(ctx, "genkit: Action.Run",
 			"name", a.Name,
 			"output", fmt.Sprintf("%#v", output),
 			"err", err)

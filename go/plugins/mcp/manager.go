@@ -68,7 +68,7 @@ func NewMCPManager(options MCPManagerOptions) (*MCPManager, error) {
 	ctx := context.Background()
 	for _, serverConfig := range options.MCPServers {
 		if err := manager.Connect(ctx, serverConfig.Name, serverConfig.Config); err != nil {
-			logger.FromContext(ctx).Error("Failed to connect to MCP server", "server", serverConfig.Name, "manager", manager.name, "error", err)
+			logger.FromContext(ctx).ErrorContext(ctx, "genkit: Failed to connect to MCP server", "server", serverConfig.Name, "manager", manager.name, "error", err)
 			// Continue with other servers
 		}
 	}
@@ -81,11 +81,11 @@ func (m *MCPManager) Connect(ctx context.Context, serverName string, config MCPC
 	// If a client with this name already exists, disconnect it first
 	if existingClient, exists := m.clients[serverName]; exists {
 		if err := existingClient.Disconnect(); err != nil {
-			logger.FromContext(ctx).Warn("Error disconnecting existing MCP client", "server", serverName, "manager", m.name, "error", err)
+			logger.FromContext(ctx).WarnContext(ctx, "genkit: Error disconnecting existing MCP client", "server", serverName, "manager", m.name, "error", err)
 		}
 	}
 
-	logger.FromContext(ctx).Info("Connecting to MCP server", "server", serverName, "manager", m.name)
+	logger.FromContext(ctx).InfoContext(ctx, "genkit: Connecting to MCP server", "server", serverName, "manager", m.name)
 
 	// Set the server name in the config
 	if config.Name == "" {
@@ -109,7 +109,7 @@ func (m *MCPManager) Disconnect(ctx context.Context, serverName string) error {
 		return fmt.Errorf("no client found with name '%s'", serverName)
 	}
 
-	logger.FromContext(ctx).Info("Disconnecting MCP server", "server", serverName, "manager", m.name)
+	logger.FromContext(ctx).InfoContext(ctx, "genkit: Disconnecting MCP server", "server", serverName, "manager", m.name)
 
 	err := client.Disconnect()
 	delete(m.clients, serverName)
@@ -128,7 +128,7 @@ func (m *MCPManager) GetActiveTools(ctx context.Context, gk *genkit.Genkit) ([]a
 
 		tools, err := client.GetActiveTools(ctx, gk)
 		if err != nil {
-			logger.FromContext(ctx).Error("Error fetching tools from MCP client", "client", name, "manager", m.name, "error", err)
+			logger.FromContext(ctx).ErrorContext(ctx, "genkit: Error fetching tools from MCP client", "client", name, "manager", m.name, "error", err)
 			continue
 		}
 

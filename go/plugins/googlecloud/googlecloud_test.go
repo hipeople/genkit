@@ -76,7 +76,7 @@ func TestGCP(t *testing.T) {
 		if err := setLogHandler(*projectID, slog.LevelInfo); err != nil {
 			t.Fatal(err)
 		}
-		slog.Debug("testing GCP logging",
+		slog.DebugContext(ctx, "genkit: Testing GCP logging",
 			"binaryName", os.Args[0],
 			"goVersion", runtime.Version())
 		// Allow time to export.

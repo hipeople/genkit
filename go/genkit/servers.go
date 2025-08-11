@@ -78,14 +78,14 @@ func Handler(a core.Action, opts ...HandlerOption) http.HandlerFunc {
 func wrapHandler(h func(http.ResponseWriter, *http.Request) error) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := slog.Default().With("reqID", requestID.Add(1))
-		log.Debug("request start", "method", r.Method, "path", r.URL.Path)
+		log.DebugContext(r.Context(), "genkit: Request start", "method", r.Method, "path", r.URL.Path)
 
 		var err error
 		defer func() {
 			if err != nil {
-				log.Error("request end", "err", err)
+				log.ErrorContext(r.Context(), "genkit: Request end", "err", err)
 			} else {
-				log.Debug("request end")
+				log.DebugContext(r.Context(), "genkit: Request end")
 			}
 		}()
 
@@ -157,7 +157,7 @@ func handler(a core.Action, params *handlerParams) func(http.ResponseWriter, *ht
 					Input:   body.Data,
 				})
 				if err != nil {
-					logger.FromContext(ctx).Error("error providing action context from request", "err", err)
+					logger.FromContext(ctx).ErrorContext(ctx, "genkit: Error providing action context from request", "err", err)
 					return err
 				}
 

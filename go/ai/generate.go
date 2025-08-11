@@ -112,10 +112,10 @@ type ModelOptions struct {
 func DefineGenerateAction(ctx context.Context, r *registry.Registry) *generateAction {
 	return (*generateAction)(core.DefineStreamingAction(r, "generate", core.ActionTypeUtil, nil, nil,
 		func(ctx context.Context, actionOpts *GenerateActionOptions, cb ModelStreamCallback) (resp *ModelResponse, err error) {
-			logger.FromContext(ctx).Debug("GenerateAction",
+			logger.FromContext(ctx).DebugContext(ctx, "genkit: GenerateAction",
 				"input", fmt.Sprintf("%#v", actionOpts))
 			defer func() {
-				logger.FromContext(ctx).Debug("GenerateAction",
+				logger.FromContext(ctx).DebugContext(ctx, "genkit: GenerateAction",
 					"output", fmt.Sprintf("%#v", resp),
 					"err", err)
 			}()
@@ -325,7 +325,7 @@ func GenerateWithRequest(ctx context.Context, r *registry.Registry, opts *Genera
 		if formatHandler != nil {
 			resp.Message, err = formatHandler.ParseMessage(resp.Message)
 			if err != nil {
-				logger.FromContext(ctx).Debug("model failed to generate output matching expected schema", "error", err.Error())
+				logger.FromContext(ctx).DebugContext(ctx, "genkit: Model failed to generate output matching expected schema", "error", err.Error())
 				return nil, core.NewError(core.INTERNAL, "model failed to generate output matching expected schema: %v", err)
 			}
 		}
@@ -632,7 +632,7 @@ func handleToolRequests(ctx context.Context, r *registry.Registry, req *ModelReq
 			if err != nil {
 				var tie *toolInterruptError
 				if errors.As(err, &tie) {
-					logger.FromContext(ctx).Debug("tool %q triggered an interrupt: %v", toolReq.Name, tie.Metadata)
+					logger.FromContext(ctx).DebugContext(ctx, "genkit: Tool %q triggered an interrupt: %v", toolReq.Name, tie.Metadata)
 
 					newPart := clone(p)
 					if newPart.Metadata == nil {
@@ -919,7 +919,7 @@ func handleResumedToolRequest(ctx context.Context, r *registry.Registry, genOpts
 				if err != nil {
 					var tie *toolInterruptError
 					if errors.As(err, &tie) {
-						logger.FromContext(ctx).Debug("tool %q triggered an interrupt: %v", restartPart.ToolRequest.Name, tie.Metadata)
+						logger.FromContext(ctx).DebugContext(ctx, "genkit: Tool %q triggered an interrupt: %v", restartPart.ToolRequest.Name, tie.Metadata)
 
 						interruptPart := clone(p)
 						if interruptPart.Metadata == nil {
