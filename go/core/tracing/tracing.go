@@ -20,7 +20,6 @@ package tracing
 import (
 	"context"
 	"errors"
-	"os"
 	"runtime"
 	"strings"
 	"sync"
@@ -29,7 +28,6 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -104,49 +102,14 @@ var (
 	providerInitOnce sync.Once
 )
 
-// TracerProvider returns the global tracer provider, creating it if needed.
-func TracerProvider() *sdktrace.TracerProvider {
-	if tp := otel.GetTracerProvider(); tp != nil {
-		if sdkTP, ok := tp.(*sdktrace.TracerProvider); ok {
-			return sdkTP
-		}
-	}
-
-	providerInitOnce.Do(func() {
-		otel.SetTracerProvider(sdktrace.NewTracerProvider())
-		if telemetryURL := os.Getenv("GENKIT_TELEMETRY_SERVER"); telemetryURL != "" {
-			WriteTelemetryImmediate(NewHTTPTelemetryClient(telemetryURL))
-		}
-	})
-
-	return otel.GetTracerProvider().(*sdktrace.TracerProvider)
+// TracerProvider returns the global tracer provider.
+func TracerProvider() trace.TracerProvider {
+	return otel.GetTracerProvider()
 }
 
 // Tracer returns a tracer from the global tracer provider.
 func Tracer() trace.Tracer {
 	return TracerProvider().Tracer("genkit-tracer", trace.WithInstrumentationVersion("v1"))
-}
-
-// WriteTelemetryImmediate adds a telemetry server to the global tracer provider.
-// Traces are saved immediately as they are finished.
-// Use this for a gtrace.Store with a fast Save method,
-// such as one that writes to a file.
-func WriteTelemetryImmediate(client TelemetryClient) {
-	e := newTelemetryServerExporter(client)
-	TracerProvider().RegisterSpanProcessor(sdktrace.NewSimpleSpanProcessor(e))
-}
-
-// WriteTelemetryBatch adds a telemetry server to the global tracer provider.
-// Traces are batched before being sent for processing.
-// Use this for a gtrace.Store with a potentially expensive Save method,
-// such as one that makes an RPC.
-//
-// Callers must invoke the returned function at the end of the program to flush the final batch
-// and perform other cleanup.
-func WriteTelemetryBatch(client TelemetryClient) (shutdown func(context.Context) error) {
-	e := newTelemetryServerExporter(client)
-	TracerProvider().RegisterSpanProcessor(sdktrace.NewBatchSpanProcessor(e))
-	return TracerProvider().Shutdown
 }
 
 const (

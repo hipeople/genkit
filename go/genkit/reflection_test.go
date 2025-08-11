@@ -45,9 +45,6 @@ func TestReflectionServer(t *testing.T) {
 	t.Run("server startup and shutdown", func(t *testing.T) {
 		g := Init(context.Background())
 
-		tc := tracing.NewTestOnlyTelemetryClient()
-		tracing.WriteTelemetryImmediate(tc)
-
 		errCh := make(chan error, 1)
 		serverStartCh := make(chan struct{})
 
