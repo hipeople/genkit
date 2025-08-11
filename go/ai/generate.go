@@ -645,7 +645,7 @@ func handleToolRequests(ctx context.Context, r api.Registry, req *ModelRequest, 
 			if err != nil {
 				var tie *toolInterruptError
 				if errors.As(err, &tie) {
-					logger.FromContext(ctx).Debug("tool %q triggered an interrupt: %v", toolReq.Name, tie.Metadata)
+					logger.FromContext(ctx).DebugContext(ctx, "genkit: Tool %q triggered an interrupt: %v", toolReq.Name, tie.Metadata)
 
 					newPart := clone(p)
 					if newPart.Metadata == nil {
@@ -960,7 +960,7 @@ func handleResumedToolRequest(ctx context.Context, r api.Registry, genOpts *Gene
 				if err != nil {
 					var tie *toolInterruptError
 					if errors.As(err, &tie) {
-						logger.FromContext(ctx).Debug("tool %q triggered an interrupt: %v", restartPart.ToolRequest.Name, tie.Metadata)
+						logger.FromContext(ctx).DebugContext(ctx, "genkit: Tool %q triggered an interrupt: %v", restartPart.ToolRequest.Name, tie.Metadata)
 
 						interruptPart := clone(p)
 						if interruptPart.Metadata == nil {

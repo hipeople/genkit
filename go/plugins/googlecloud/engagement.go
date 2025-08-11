@@ -97,7 +97,7 @@ func (e *EngagementTelemetry) writeUserFeedback(span sdktrace.ReadOnlySpan, proj
 		logData["textFeedback"] = truncate(textFeedback)
 	}
 
-	slog.InfoContext(ctx, fmt.Sprintf("[genkit] UserFeedback[%s]", name), "data", logData)
+	slog.InfoContext(ctx, fmt.Sprintf("genkit: UserFeedback[%s]", name), "data", logData)
 }
 
 // writeUserAcceptance records metrics and logs for user acceptance
@@ -125,7 +125,7 @@ func (e *EngagementTelemetry) writeUserAcceptance(span sdktrace.ReadOnlySpan, pr
 		logData[k] = v
 	}
 
-	slog.InfoContext(ctx, fmt.Sprintf("[genkit] UserAcceptance[%s]", name), "data", logData)
+	slog.InfoContext(ctx, fmt.Sprintf("genkit: UserAcceptance[%s]", name), "data", logData)
 }
 
 // Helper functions

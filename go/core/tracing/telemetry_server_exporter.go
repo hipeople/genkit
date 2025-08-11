@@ -43,7 +43,7 @@ func newTelemetryServerExporter(client TelemetryClient) *telemetryServerExporter
 // Saving is not atomic: it is possible that some but not all spans will be saved.
 func (e *telemetryServerExporter) ExportSpans(ctx context.Context, spans []sdktrace.ReadOnlySpan) error {
 	if e.client == nil {
-		slog.Debug("telemetry server is not configured, trace not saved")
+		slog.DebugContext(ctx, "genkit: Telemetry server is not configured, trace not saved")
 		return nil
 	}
 

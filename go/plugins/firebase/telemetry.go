@@ -17,6 +17,7 @@
 package firebase
 
 import (
+	"context"
 	"log/slog"
 	"os"
 
@@ -103,7 +104,7 @@ func EnableFirebaseTelemetry(options *FirebaseTelemetryOptions) {
 
 // initializeTelemetry is the internal function that sets up Firebase telemetry.
 func initializeTelemetry(options *FirebaseTelemetryOptions) {
-	slog.Debug("Initializing Firebase Genkit Monitoring.")
+	slog.DebugContext(context.TODO(), "genkit: Initializing Firebase Genkit Monitoring.")
 
 	if options == nil {
 		options = &FirebaseTelemetryOptions{}
@@ -111,7 +112,7 @@ func initializeTelemetry(options *FirebaseTelemetryOptions) {
 
 	projectID := resolveFirebaseProjectID(options.ProjectID)
 	if projectID == "" {
-		slog.Warn("Firebase project ID not found. Set FIREBASE_PROJECT_ID, GOOGLE_CLOUD_PROJECT, or GCLOUD_PROJECT environment variable, or pass ProjectID in options.")
+		slog.WarnContext(context.TODO(), "genkit: Firebase project ID not found. Set FIREBASE_PROJECT_ID, GOOGLE_CLOUD_PROJECT, or GCLOUD_PROJECT environment variable, or pass ProjectID in options.")
 	}
 
 	gcOptions := &googlecloud.GoogleCloudTelemetryOptions{

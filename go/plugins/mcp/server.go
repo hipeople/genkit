@@ -95,12 +95,12 @@ func (s *GenkitMCPServer) setup() error {
 	// Register resources with the MCP server
 	for _, resourceAction := range resourceActions {
 		if err := s.registerResourceWithMCP(resourceAction); err != nil {
-			slog.Warn("Failed to register resource", "resource", resourceAction.Desc().Name, "error", err)
+			slog.WarnContext(context.TODO(), "genkit: Failed to register resource", "resource", resourceAction.Desc().Name, "error", err)
 		}
 	}
 
 	s.actionsResolved = true
-	slog.Info("MCP Server setup complete",
+	slog.InfoContext(context.TODO(), "genkit: MCP Server setup complete",
 		"name", s.options.Name,
 		"tools", len(s.toolActions),
 		"resources", len(s.resourceActions))

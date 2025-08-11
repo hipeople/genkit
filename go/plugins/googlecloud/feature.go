@@ -75,9 +75,9 @@ func (f *FeatureTelemetry) Tick(span sdktrace.ReadOnlySpan, logInputOutput bool,
 		f.writeFeatureFailure(name, latencyMs, errorName)
 	default:
 		if state == "" {
-			slog.Warn("Unknown feature state", "state", "<missing>", "feature", name)
+			slog.WarnContext(context.TODO(), "genkit: Unknown feature state", "state", "<missing>", "feature", name)
 		} else {
-			slog.Warn("Unknown feature state", "state", state, "feature", name)
+			slog.WarnContext(context.TODO(), "genkit: Unknown feature state", "state", state, "feature", name)
 		}
 		return
 	}
@@ -147,7 +147,7 @@ func (f *FeatureTelemetry) writeLog(span sdktrace.ReadOnlySpan, tag, featureName
 		logData[k] = v
 	}
 
-	slog.InfoContext(ctx, fmt.Sprintf("[genkit] %s[%s, %s]", tag, path, featureName), MetadataKey, logData)
+	slog.InfoContext(ctx, fmt.Sprintf("genkit: %s[%s, %s]", tag, path, featureName), MetadataKey, logData)
 }
 
 // Helper functions
