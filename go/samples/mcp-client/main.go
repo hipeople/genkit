@@ -43,13 +43,13 @@ func clientExample() {
 		},
 	})
 	if err != nil {
-		logger.FromContext(ctx).Error("Failed to create MCP client", "error", err)
+		logger.FromContext(ctx).ErrorContext(ctx, "genkit: Failed to create MCP client", "error", err)
 		return
 	}
 
 	// Get tools and generate response
 	tools, _ := client.GetActiveTools(ctx, g)
-	logger.FromContext(ctx).Info("Found MCP time tools", "count", len(tools), "client", "mcp-time")
+	logger.FromContext(ctx).InfoContext(ctx, "genkit: Found MCP time tools", "count", len(tools), "client", "mcp-time")
 
 	var toolRefs []ai.ToolRef
 	for _, tool := range tools {
@@ -63,15 +63,15 @@ func clientExample() {
 		ai.WithToolChoice(ai.ToolChoiceAuto),
 	)
 	if err != nil {
-		logger.FromContext(ctx).Error("Generation failed", "error", err)
+		logger.FromContext(ctx).ErrorContext(ctx, "genkit: Generation failed", "error", err)
 	} else {
-		logger.FromContext(ctx).Info("Generation completed", "response", response.Text())
+		logger.FromContext(ctx).InfoContext(ctx, "genkit: Generation completed", "response", response.Text())
 	}
 
 	// Disconnect from server
-	logger.FromContext(ctx).Info("Disconnecting from MCP server", "client", "mcp-time")
+	logger.FromContext(ctx).InfoContext(ctx, "genkit: Disconnecting from MCP server", "client", "mcp-time")
 	client.Disconnect()
-	logger.FromContext(ctx).Info("Disconnected from MCP server", "client", "mcp-time")
+	logger.FromContext(ctx).InfoContext(ctx, "genkit: Disconnected from MCP server", "client", "mcp-time")
 }
 
 // MCP Host Example - connects to time server and demonstrates both tools and resources
@@ -115,9 +115,9 @@ func managerExample() {
 		ai.WithToolChoice(ai.ToolChoiceAuto),
 	)
 	if err != nil {
-		logger.FromContext(ctx).Error("Generation failed", "error", err)
+		logger.FromContext(ctx).ErrorContext(ctx, "genkit: Generation failed", "error", err)
 	} else {
-		logger.FromContext(ctx).Info("Generation completed", "response", response.Text())
+		logger.FromContext(ctx).InfoContext(ctx, "genkit: Generation completed", "response", response.Text())
 	}
 
 	// Disconnect from server
@@ -137,7 +137,7 @@ func main() {
 
 	switch os.Args[1] {
 	case "client":
-		logger.FromContext(ctx).Info("Running MCP Client example")
+		logger.FromContext(ctx).InfoContext(ctx, "genkit: Running MCP Client example")
 		clientExample()
 	case "manager":
 		logger.FromContext(ctx).Info("Running MCP Host example")

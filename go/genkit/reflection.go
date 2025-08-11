@@ -105,7 +105,7 @@ func startReflectionServer(ctx context.Context, g *Genkit, errCh chan<- error, s
 	}
 	s.Handler = serveMux(g, s)
 
-	slog.Debug("starting reflection server", "addr", s.Addr)
+	slog.DebugContext(ctx, "genkit: Starting reflection server", "addr", s.Addr)
 
 	if err := s.writeRuntimeFile(s.Addr); err != nil {
 		errCh <- fmt.Errorf("failed to write runtime file: %w", err)
@@ -143,11 +143,11 @@ func startReflectionServer(ctx context.Context, g *Genkit, errCh chan<- error, s
 		defer cancel()
 
 		if err := s.Shutdown(shutdownCtx); err != nil {
-			slog.Error("reflection server shutdown error", "error", err)
+			slog.ErrorContext(ctx, "genkit: Reflection server shutdown error", "error", err)
 		}
 
 		if err := s.cleanupRuntimeFile(); err != nil {
-			slog.Error("failed to cleanup runtime file", "error", err)
+			slog.ErrorContext(ctx, "genkit: Failed to cleanup runtime file", "error", err)
 		}
 	}()
 
@@ -195,7 +195,7 @@ func (s *reflectionServer) writeRuntimeFile(url string) error {
 		return fmt.Errorf("failed to write runtime file: %w", err)
 	}
 
-	slog.Debug("runtime file written", "path", s.RuntimeFilePath)
+	slog.DebugContext(context.TODO(), "genkit: Runtime file written", "path", s.RuntimeFilePath)
 	return nil
 }
 
@@ -219,7 +219,7 @@ func (s *reflectionServer) cleanupRuntimeFile() error {
 		if err := os.Remove(s.RuntimeFilePath); err != nil {
 			return fmt.Errorf("failed to remove runtime file: %w", err)
 		}
-		slog.Debug("runtime file cleaned up", "path", s.RuntimeFilePath)
+		slog.DebugContext(context.TODO(), "genkit: Runtime file cleaned up", "path", s.RuntimeFilePath)
 	}
 
 	return nil
@@ -239,7 +239,7 @@ func findProjectRoot() (string, error) {
 
 		parent := filepath.Dir(dir)
 		if parent == dir {
-			slog.Warn("could not find project root (go.mod not found)")
+			slog.WarnContext(context.TODO(), "genkit: Could not find project root (go.mod not found)")
 			return os.Getwd()
 		}
 		dir = parent
@@ -267,14 +267,14 @@ func serveMux(g *Genkit, s *reflectionServer) *http.ServeMux {
 func wrapReflectionHandler(h func(w http.ResponseWriter, r *http.Request) error) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		logger.FromContext(ctx).Debug("request start", "method", r.Method, "path", r.URL.Path)
+		logger.FromContext(ctx).DebugContext(ctx, "genkit: Request start", "method", r.Method, "path", r.URL.Path)
 
 		var err error
 		defer func() {
 			if err != nil {
-				logger.FromContext(ctx).Error("request end", "err", err)
+				logger.FromContext(ctx).ErrorContext(ctx, "genkit: Request end", "err", err)
 			} else {
-				logger.FromContext(ctx).Debug("request end")
+				logger.FromContext(ctx).DebugContext(ctx, "genkit: Request end")
 			}
 		}()
 
@@ -310,7 +310,7 @@ func handleRunAction(g *Genkit) func(w http.ResponseWriter, r *http.Request) err
 			return err
 		}
 
-		logger.FromContext(ctx).Debug("running action", "key", body.Key, "stream", stream)
+		logger.FromContext(ctx).DebugContext(ctx, "genkit: Running action", "key", body.Key, "stream", stream)
 
 		var cb streamingCallback[json.RawMessage]
 		if stream {
@@ -385,7 +385,7 @@ func handleNotify() func(w http.ResponseWriter, r *http.Request) error {
 		}
 
 		if body.ReflectionApiSpecVersion != internal.GENKIT_REFLECTION_API_SPEC_VERSION {
-			slog.Error("Genkit CLI version is not compatible with runtime library. Please use `genkit-cli` version compatible with runtime library version.")
+			slog.ErrorContext(r.Context(), "genkit: Genkit CLI version is not compatible with runtime library. Please use `genkit-cli` version compatible with runtime library version.")
 		}
 
 		w.WriteHeader(http.StatusOK)
@@ -514,7 +514,7 @@ func writeJSON(ctx context.Context, w http.ResponseWriter, value any) error {
 	}
 	_, err = w.Write(data)
 	if err != nil {
-		logger.FromContext(ctx).Error("writing output", "err", err)
+		logger.FromContext(ctx).ErrorContext(ctx, "genkit: Writing output", "err", err)
 	}
 	if f, ok := w.(http.Flusher); ok {
 		f.Flush()

@@ -25,7 +25,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/firebase/genkit/go/core/logger"
 	"github.com/firebase/genkit/go/internal/base"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -179,11 +178,6 @@ func RunInNewSpan[I, O any](
 	input I,
 	f func(context.Context, I) (O, error),
 ) (O, error) {
-	// TODO: support span links.
-	log := logger.FromContext(ctx)
-	log.Debug("span start", "name", metadata.Name)
-	defer log.Debug("span end", "name", metadata.Name)
-
 	if metadata == nil {
 		metadata = &SpanMetadata{}
 	}

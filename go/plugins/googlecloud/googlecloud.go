@@ -84,7 +84,7 @@ func initializeTelemetry(opts *GoogleCloudTelemetryOptions) {
 	// Auto-discover credentials and project ID from environment
 	authConfig, authErr := CredentialsFromEnvironment()
 	if authErr != nil {
-		slog.Debug("Could not auto-discover credentials from environment", "error", authErr)
+		slog.DebugContext(context.TODO(), "genkit: Could not auto-discover credentials from environment", "error", authErr)
 	}
 
 	// Use provided credentials or fall back to auto-discovered ones
@@ -136,7 +136,7 @@ func initializeTelemetry(opts *GoogleCloudTelemetryOptions) {
 
 		baseExporter, err := texporter.New(traceOpts...)
 		if err != nil {
-			slog.Error("Failed to create Google Cloud trace exporter", "error", err, "error_type", fmt.Sprintf("%T", err))
+			slog.ErrorContext(context.TODO(), "genkit: Failed to create Google Cloud trace exporter", "error", err, "error_type", fmt.Sprintf("%T", err))
 			return
 		}
 
@@ -162,20 +162,20 @@ func initializeTelemetry(opts *GoogleCloudTelemetryOptions) {
 		spanProcessors = append(spanProcessors, batchProcessor)
 
 		if !opts.DisableMetrics {
-			slog.Debug("Setting up metrics provider...")
+			slog.DebugContext(context.TODO(), "genkit: Setting up metrics provider...")
 			if err := setMeterProvider(projectID, metricInterval, credentials, finalResource); err != nil {
-				slog.Error("Failed to set up Google Cloud metrics", "error", err)
+				slog.ErrorContext(context.TODO(), "genkit: Failed to set up Google Cloud metrics", "error", err)
 			}
-			slog.Debug("Metrics provider setup complete")
+			slog.DebugContext(context.TODO(), "genkit: Metrics provider setup complete")
 		}
-		slog.Debug("Setting up log handler...")
+		slog.DebugContext(context.TODO(), "genkit: Setting up log handler...")
 		if err := setLogHandler(projectID, logLevel, credentials); err != nil {
-			slog.Error("Failed to set up Google Cloud logging", "error", err)
+			slog.ErrorContext(context.TODO(), "genkit: Failed to set up Google Cloud logging", "error", err)
 		}
-		slog.Debug("Log handler setup complete")
-		slog.Info("Google Cloud telemetry fully initialized", "project_id", projectID, "modules", len(modules))
+		slog.DebugContext(context.TODO(), "genkit: Log handler setup complete")
+		slog.InfoContext(context.TODO(), "genkit: Google Cloud telemetry fully initialized", "project_id", projectID, "modules", len(modules))
 	} else {
-		slog.Info("Google Cloud telemetry resource configured, export disabled in dev environment", "project_id", projectID)
+		slog.InfoContext(context.TODO(), "genkit: Google Cloud telemetry resource configured, export disabled in dev environment", "project_id", projectID)
 	}
 
 	var tpOptions []sdktrace.TracerProviderOption
@@ -192,7 +192,7 @@ func initializeTelemetry(opts *GoogleCloudTelemetryOptions) {
 	tp := sdktrace.NewTracerProvider(tpOptions...)
 	otel.SetTracerProvider(tp) // Set as global TracerProvider
 
-	slog.Info("Google Cloud telemetry TracerProvider configured", "processors", len(spanProcessors))
+	slog.InfoContext(context.TODO(), "genkit: Google Cloud telemetry TracerProvider configured", "processors", len(spanProcessors))
 	setupGracefulShutdown(tp)
 }
 
@@ -286,7 +286,7 @@ func (e *AdjustingTraceExporter) ExportSpans(ctx context.Context, spans []sdktra
 	adjustedSpans := e.adjust(spans)
 	err := e.exporter.ExportSpans(ctx, adjustedSpans)
 	if err != nil {
-		slog.Error("Unable to send telemetry to Google Cloud",
+		slog.ErrorContext(context.TODO(), "genkit: Unable to send telemetry to Google Cloud",
 			"error", err,
 			"span_count", len(adjustedSpans),
 			"project_id", e.projectId,
@@ -296,7 +296,7 @@ func (e *AdjustingTraceExporter) ExportSpans(ctx context.Context, spans []sdktra
 }
 
 func (e *AdjustingTraceExporter) Shutdown(ctx context.Context) error {
-	slog.Info("Shutting down adjusting trace exporter", "spans_processed", e.spansProcessed)
+	slog.InfoContext(context.TODO(), "genkit: Shutting down adjusting trace exporter", "spans_processed", e.spansProcessed)
 	return e.exporter.Shutdown(ctx)
 }
 
@@ -605,7 +605,7 @@ func setupGracefulShutdown(tp *sdktrace.TracerProvider) {
 
 	go func() {
 		<-c
-		slog.Info("Received shutdown signal, flushing telemetry...")
+		slog.InfoContext(context.TODO(), "genkit: Received shutdown signal, flushing telemetry...")
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -613,7 +613,7 @@ func setupGracefulShutdown(tp *sdktrace.TracerProvider) {
 		var hasErrors bool
 
 		if err := tp.ForceFlush(ctx); err != nil {
-			slog.Error("Failed to flush spans during shutdown", "error", err)
+			slog.ErrorContext(context.TODO(), "genkit: Failed to flush spans during shutdown", "error", err)
 			hasErrors = true
 		}
 
@@ -622,14 +622,14 @@ func setupGracefulShutdown(tp *sdktrace.TracerProvider) {
 		}
 
 		if err := tp.Shutdown(ctx); err != nil {
-			slog.Error("Failed to shutdown TracerProvider", "error", err)
+			slog.ErrorContext(context.TODO(), "genkit: Failed to shutdown TracerProvider", "error", err)
 			hasErrors = true
 		}
 
 		if hasErrors {
-			slog.Warn("Telemetry shutdown completed with errors")
+			slog.WarnContext(context.TODO(), "genkit: Telemetry shutdown completed with errors")
 		} else {
-			slog.Info("Telemetry shutdown completed successfully")
+			slog.InfoContext(context.TODO(), "genkit: Telemetry shutdown completed successfully")
 		}
 		os.Exit(0)
 	}()
@@ -640,13 +640,13 @@ func shutdownMetricsProvider(ctx context.Context, mp metric.MeterProvider) bool 
 	hasErrors := false
 	if flusher, ok := mp.(interface{ ForceFlush(context.Context) error }); ok {
 		if err := flusher.ForceFlush(ctx); err != nil {
-			slog.Error("Failed to flush metrics during shutdown", "error", err)
+			slog.ErrorContext(context.TODO(), "genkit: Failed to flush metrics during shutdown", "error", err)
 			hasErrors = true
 		}
 	}
 	if shutdowner, ok := mp.(interface{ Shutdown(context.Context) error }); ok {
 		if err := shutdowner.Shutdown(ctx); err != nil {
-			slog.Error("Failed to shutdown MeterProvider", "error", err)
+			slog.ErrorContext(context.TODO(), "genkit: Failed to shutdown MeterProvider", "error", err)
 			hasErrors = true
 		}
 	}

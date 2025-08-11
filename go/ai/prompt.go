@@ -239,7 +239,7 @@ func (p *prompt) Render(ctx context.Context, input any) (*GenerateActionOptions,
 	}
 
 	if len(p.Middleware) > 0 {
-		logger.FromContext(ctx).Warn(fmt.Sprintf("middleware set on prompt %q will be ignored during Prompt.Render", p.Name()))
+		logger.FromContext(ctx).WarnContext(ctx, "genkit: Middleware set on prompt will be ignored during Prompt.Render", "prompt", p.Name())
 	}
 
 	// TODO: This is hacky; we should have a helper that fetches the metadata.
@@ -519,7 +519,7 @@ func LoadPromptDir(r api.Registry, dir string, namespace string) {
 		if !useDefaultDir {
 			panic(fmt.Errorf("failed to resolve prompt directory %q: %w", dir, err))
 		}
-		slog.Debug("default prompt directory not found, skipping loading .prompt files", "dir", dir)
+		slog.DebugContext(context.TODO(), "genkit: Default prompt directory not found, skipping loading .prompt files", "dir", dir)
 		return
 	}
 
@@ -527,7 +527,7 @@ func LoadPromptDir(r api.Registry, dir string, namespace string) {
 		if !useDefaultDir {
 			panic(fmt.Errorf("failed to resolve prompt directory %q: %w", dir, err))
 		}
-		slog.Debug("Default prompt directory not found, skipping loading .prompt files", "dir", dir)
+		slog.DebugContext(context.TODO(), "genkit: Default prompt directory not found, skipping loading .prompt files", "dir", dir)
 		return
 	}
 
@@ -551,11 +551,11 @@ func loadPromptDir(r api.Registry, dir string, namespace string) {
 				partialName := strings.TrimSuffix(filename[1:], ".prompt")
 				source, err := os.ReadFile(path)
 				if err != nil {
-					slog.Error("Failed to read partial file", "error", err)
+					slog.ErrorContext(context.TODO(), "genkit: Failed to read partial file", "error", err)
 					continue
 				}
 				r.RegisterPartial(partialName, string(source))
-				slog.Debug("Registered Dotprompt partial", "name", partialName, "file", path)
+				slog.DebugContext(context.TODO(), "genkit: Registered Dotprompt partial", "name", partialName, "file", path)
 			} else {
 				LoadPrompt(r, dir, filename, namespace)
 			}
@@ -571,7 +571,7 @@ func LoadPrompt(r api.Registry, dir, filename, namespace string) Prompt {
 	sourceFile := filepath.Join(dir, filename)
 	source, err := os.ReadFile(sourceFile)
 	if err != nil {
-		slog.Error("Failed to read prompt file", "file", sourceFile, "error", err)
+		slog.ErrorContext(context.TODO(), "genkit: Failed to read prompt file", "file", sourceFile, "error", err)
 		return nil
 	}
 
@@ -579,13 +579,13 @@ func LoadPrompt(r api.Registry, dir, filename, namespace string) Prompt {
 
 	parsedPrompt, err := dp.Parse(string(source))
 	if err != nil {
-		slog.Error("Failed to parse file as dotprompt", "file", sourceFile, "error", err)
+		slog.ErrorContext(context.TODO(), "genkit: Failed to parse file as dotprompt", "file", sourceFile, "error", err)
 		return nil
 	}
 
 	metadata, err := dp.RenderMetadata(string(source), &parsedPrompt.PromptMetadata)
 	if err != nil {
-		slog.Error("Failed to render dotprompt metadata", "file", sourceFile, "error", err)
+		slog.ErrorContext(context.TODO(), "genkit: Failed to render dotprompt metadata", "file", sourceFile, "error", err)
 		return nil
 	}
 
@@ -653,7 +653,7 @@ func LoadPrompt(r api.Registry, dir, filename, namespace string) Prompt {
 
 	dpMessages, err := dotprompt.ToMessages(parsedPrompt.Template, &dotprompt.DataArgument{})
 	if err != nil {
-		slog.Error("Failed to convert prompt template to messages", "file", sourceFile, "error", err)
+		slog.ErrorContext(context.TODO(), "genkit: Failed to convert prompt template to messages", "file", sourceFile, "error", err)
 		return nil
 	}
 
@@ -662,7 +662,7 @@ func LoadPrompt(r api.Registry, dir, filename, namespace string) Prompt {
 	for _, dpMsg := range dpMessages {
 		parts, err := convertToPartPointers(dpMsg.Content)
 		if err != nil {
-			slog.Error("Failed to convert message parts", "file", sourceFile, "error", err)
+			slog.ErrorContext(context.TODO(), "genkit: Failed to convert message parts", "file", sourceFile, "error", err)
 			return nil
 		}
 
@@ -699,7 +699,7 @@ func LoadPrompt(r api.Registry, dir, filename, namespace string) Prompt {
 
 	prompt := DefinePrompt(r, key, promptOpts...)
 
-	slog.Debug("Registered Dotprompt", "name", key, "file", sourceFile)
+	slog.DebugContext(context.TODO(), "genkit: Registered Dotprompt", "name", key, "file", sourceFile)
 
 	return prompt
 }

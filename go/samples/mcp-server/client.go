@@ -42,7 +42,7 @@ func client() {
 		},
 	})
 	if err != nil {
-		logger.FromContext(ctx).Error("Failed to connect to MCP server", "error", err)
+		logger.FromContext(ctx).ErrorContext(ctx, "genkit: Failed to connect to MCP server", "error", err)
 		return
 	}
 	defer client.Disconnect()
@@ -50,11 +50,11 @@ func client() {
 	// Import tools
 	tools, err := client.GetActiveTools(ctx, g)
 	if err != nil {
-		logger.FromContext(ctx).Error("Failed to get tools from MCP server", "error", err)
+		logger.FromContext(ctx).ErrorContext(ctx, "genkit: Failed to get tools from MCP server", "error", err)
 		return
 	}
 
-	logger.FromContext(ctx).Info("Connected to MCP server", "tools", getToolNames(tools))
+	logger.FromContext(ctx).InfoContext(ctx, "genkit: Connected to MCP server", "tools", getToolNames(tools))
 
 	// Convert to ToolRef
 	var toolRefs []ai.ToolRef
@@ -63,7 +63,7 @@ func client() {
 	}
 
 	// Use tools with AI
-	logger.FromContext(ctx).Info("Starting demo: Fetch and summarize content")
+	logger.FromContext(ctx).InfoContext(ctx, "genkit: Starting demo: Fetch and summarize content")
 
 	response, err := genkit.Generate(ctx, g,
 		ai.WithModelName("googleai/gemini-2.5-pro"),
@@ -73,9 +73,9 @@ func client() {
 	)
 
 	if err != nil {
-		logger.FromContext(ctx).Error("Generation failed", "error", err)
+		logger.FromContext(ctx).ErrorContext(ctx, "genkit: Generation failed", "error", err)
 	} else {
-		logger.FromContext(ctx).Info("Generation completed", "result", response.Text())
+		logger.FromContext(ctx).InfoContext(ctx, "genkit: Generation completed", "result", response.Text())
 	}
 }
 

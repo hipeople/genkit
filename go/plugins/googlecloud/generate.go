@@ -175,7 +175,7 @@ func (g *GenerateTelemetry) recordGenerateActionMetrics(modelName, featureName, 
 		g.outputVideos.Add(context.Background(), int64(usage.OutputVideos), opt)
 		g.outputAudio.Add(context.Background(), int64(usage.OutputAudioFiles), opt)
 	} else {
-		slog.Warn("GenerateTelemetry.Tick: No usage data available", "output_is_nil", output == nil)
+		slog.WarnContext(context.TODO(), "genkit: GenerateTelemetry.Tick: No usage data available", "output_is_nil", output == nil)
 	}
 }
 
@@ -219,7 +219,7 @@ func (g *GenerateTelemetry) recordGenerateActionConfigLogs(span sdktrace.ReadOnl
 	logData["source"] = "go"
 	logData["sourceVersion"] = internal.Version
 
-	message := fmt.Sprintf("[genkit] Config[%s, %s]", path, model)
+	message := fmt.Sprintf("genkit: Config[%s, %s]", path, model)
 	slog.InfoContext(ctx, message, "data", logData)
 }
 
@@ -268,7 +268,7 @@ func (g *GenerateTelemetry) recordGenerateActionInputLogs(span sdktrace.ReadOnly
 			logData["messageIndex"] = msgIdx
 			logData["totalMessages"] = messages
 
-			message := fmt.Sprintf("[genkit] Input[%s, %s] %s", path, model, partCounts)
+			message := fmt.Sprintf("genkit: Input[%s, %s] %s", path, model, partCounts)
 			slog.InfoContext(ctx, message, MetadataKey, logData)
 		}
 	}
@@ -326,7 +326,7 @@ func (g *GenerateTelemetry) recordGenerateActionOutputLogs(span sdktrace.ReadOnl
 			logData["messageIndex"] = 0
 			logData["finishReason"] = output.FinishReason
 
-			message := fmt.Sprintf("[genkit] Output[%s, %s] %s", path, model, partCounts)
+			message := fmt.Sprintf("genkit: Output[%s, %s] %s", path, model, partCounts)
 			slog.InfoContext(ctx, message, MetadataKey, logData)
 		}
 	}
