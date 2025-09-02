@@ -92,9 +92,6 @@ func (r *Registry) RegisterPlugin(name string, p api.Plugin) {
 func (r *Registry) RegisterAction(key string, action api.Action) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	if _, ok := r.actions[key]; ok {
-		panic(fmt.Sprintf("action %q is already registered", key))
-	}
 	r.actions[key] = action
 	slog.DebugContext(context.TODO(), "genkit: RegisterAction", "key", key)
 }
