@@ -660,49 +660,71 @@ func LoadPrompt(r api.Registry, dir, filename, namespace string) Prompt {
 
 	key := promptKey(name, variant, namespace)
 
-	dpMessages, err := dotprompt.ToMessages(parsedPrompt.Template, &dotprompt.DataArgument{})
-	if err != nil {
-		slog.ErrorContext(context.TODO(), "genkit: Failed to convert prompt template to messages", "file", sourceFile, "error", err)
-		return nil
-	}
-
-	var systemText string
-	var nonSystemMessages []*Message
-	for _, dpMsg := range dpMessages {
-		parts, err := convertToPartPointers(dpMsg.Content)
-		if err != nil {
-			slog.ErrorContext(context.TODO(), "genkit: Failed to convert message parts", "file", sourceFile, "error", err)
-			return nil
-		}
-
-		role := Role(dpMsg.Role)
-		if role == RoleSystem {
-			var textParts []string
-			for _, part := range parts {
-				if part.IsText() {
-					textParts = append(textParts, part.Text)
-				}
-			}
-
-			if len(textParts) > 0 {
-				systemText = strings.Join(textParts, " ")
-			}
-		} else {
-			nonSystemMessages = append(nonSystemMessages, &Message{Role: role, Content: parts})
-		}
-	}
+	// Detect role directives by inspecting template text (data-independent approach)
+	// This avoids rendering at load time which could fail for prompts without defaults
+	hasRoleDirectives := templateHasRoleDirectives(parsedPrompt.Template)
 
 	promptOpts := []PromptOption{opts}
 
-	// Add system prompt if found
-	if systemText != "" {
-		promptOpts = append(promptOpts, WithSystem(systemText))
-	}
+	if hasRoleDirectives {
+		// For templates with role directives, render at execution time with actual inputs
+		template := parsedPrompt.Template
+		defaultInput := metadata.Input.Default // capture defaults for closure
+		promptOpts = append(promptOpts, WithMessagesFn(func(ctx context.Context, input any) ([]*Message, error) {
+			inputMap, err := buildVariables(input)
+			if err != nil {
+				return nil, err
+			}
 
-	// If there are non-system messages, use WithMessages, otherwise use WithPrompt for template
-	if len(nonSystemMessages) > 0 {
-		promptOpts = append(promptOpts, WithMessages(nonSystemMessages...))
-	} else if systemText == "" {
+			// Merge default input with provided input (provided values take precedence)
+			mergedInput := make(map[string]any)
+			for k, v := range defaultInput {
+				mergedInput[k] = v
+			}
+			for k, v := range inputMap {
+				mergedInput[k] = v
+			}
+
+			// Get fresh dotprompt instance from registry
+			dpInstance := r.Dotprompt()
+
+			// Use metadata with only defaults (no schema) to avoid Picoschema validation errors
+			execMetadata := &dotprompt.PromptMetadata{
+				Input: dotprompt.PromptMetadataInput{
+					Default: defaultInput,
+				},
+			}
+			compiled, err := dpInstance.Compile(template, execMetadata)
+			if err != nil {
+				return nil, err
+			}
+
+			// Prepare context
+			context := map[string]any{}
+			actionCtx := core.FromContext(ctx)
+			maps.Copy(context, actionCtx)
+
+			rendered, err := compiled(&dotprompt.DataArgument{
+				Input:   mergedInput,
+				Context: context,
+			}, execMetadata)
+			if err != nil {
+				return nil, err
+			}
+
+			// Convert to genkit messages
+			var messages []*Message
+			for _, dpMsg := range rendered.Messages {
+				parts, err := convertToPartPointers(dpMsg.Content)
+				if err != nil {
+					return nil, err
+				}
+				messages = append(messages, &Message{Role: Role(dpMsg.Role), Content: parts})
+			}
+			return messages, nil
+		}))
+	} else {
+		// For templates without role directives, use the existing single-template approach
 		promptOpts = append(promptOpts, WithPrompt(parsedPrompt.Template))
 	}
 
@@ -727,6 +749,28 @@ func variantKey(variant string) string {
 		return fmt.Sprintf(".%s", variant)
 	}
 	return ""
+}
+
+// templateHasRoleDirectives checks if a template contains role directives.
+// This is a data-independent check that inspects the template text directly,
+// avoiding the need to render the template at load time.
+func templateHasRoleDirectives(template string) bool {
+	// Check for common role directive patterns:
+	// 1. Handlebars syntax: {{ role "system" }} or {{role "system"}}
+	// 2. Pre-rendered syntax: <<<dotprompt:role:system>>>
+	patterns := []string{
+		`{{ role "`,
+		`{{role "`,
+		`{{ role '`,
+		`{{role '`,
+		`<<<dotprompt:role:`,
+	}
+	for _, pattern := range patterns {
+		if strings.Contains(template, pattern) {
+			return true
+		}
+	}
+	return false
 }
 
 // contentType determines the MIME content type of the given data URI
